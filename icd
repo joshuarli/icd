@@ -20,6 +20,10 @@ handle () {
 
     # handle key, and adjust index and/or pwd as necessary
     # ABCD corresponds to the vt100 special key codes for arrow keys
+
+    # still unsure why this works, dd ibs=1 count=1 should only give 1 byte under stty raw (which sets cs8 - character size 8)
+    # while arrow keys will send 3 bytes/chars - escape, open bracket, capital letter
+    # the subshell and assign to variable might be doing some weird stuff, because if i dd ... | read key, it breaks, and key isn't easily introspectable
     case "$1" in
         A|k)
             # up
@@ -90,11 +94,10 @@ main () {
 
     # populate initial global state, clear the screen and initial painting
     handle ""
-
     while :; do
         stty raw
-        key="$(dd bs=1 count=1 2>/dev/null)"
-        # TODO: would like to get rid of shelling out to read a raw byte, but conv=unblock | read raw doesn't work
+        # XXX: see note in handle() case statement
+        key="$(dd ibs=1 count=1 2>/dev/null)"
         stty -raw
         handle "$key"
     done
