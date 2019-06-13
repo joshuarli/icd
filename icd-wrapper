@@ -1,0 +1,4 @@
+ic () {
+    icd;
+    cd "$(< /tmp/icd-dir)"
+}

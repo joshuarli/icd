@@ -1,0 +1,100 @@
+#!/usr/bin/env sh
+
+# interactive cd with arrow keys - think "fast travel"
+# implemented in posix shell, with as little usage of external processes as possible
+# assumes terminal is vt100
+
+# global state
+# index of current item in ls output for PWD.
+i=1
+# string at i of PWD listing, used for a faster right arrow (cd into i). precomputed during paint new state.
+is=
+# number of items, used for i wrapping around up/down. precomputed during paint new state.
+n=
+
+handle () {
+    # clear terminal - POSIX specifies tput clear
+    tput clear
+    # alternatively, use vt100 RIS - reset terminal to initial state
+    # printf %s '\x1bc'
+
+    # handle key, and adjust index and/or pwd as necessary
+    # get last character of string
+    # https://unix.stackexchange.com/a/163485/233306
+    case "${1#"${1%?}"}" in
+        A)
+            i=$((i-1))
+            [ "$i" = 0 ] && i="$n"
+            ;;
+        B)
+            if [ "$i" = "$n" ]; then
+                i=1
+            else
+                i=$((i+1))
+            fi
+            ;;
+        C)
+            if [ -d "$is" ]; then
+                cd "$is"
+                i=1
+            fi
+            ;;
+        D)
+            # left - go up a directory, and recalculate the index.
+            wd="${PWD##*/}"
+            cd ..
+            i=1
+            for item in "$PWD"/*; do
+                [ "${item##*/}" = "$wd" ] && break
+                i=$((i+1))
+            done
+            ;;
+        q)
+            exit
+            ;;
+    esac
+
+    # store PWD for icd-wrapper to cd into.
+    printf %s "$PWD" > /tmp/icd-dir
+
+    # paint new state
+    # TODO: scrolling items past # lines available
+    printf "\x1b[1m%s\x1b[0m\n\n" "$PWD"
+    j=1
+    for item in "$PWD"/*; do
+        disp="${item##*/}"
+        if [ "$i" = "$j" ]; then
+            disp="> ${disp}"
+            is="$item"
+        fi
+        if [ -d "$item" ]; then
+            printf "%s/\n" "$disp"
+        else
+            printf %s\\n "$disp"
+        fi
+        j=$((j+1))
+    done
+    n=$((j-1))
+
+    # move cursor to upper left corner, then move down i+1 lines
+    _i=$((i+1))
+    printf %s\\n "\x1b[H\x1b[${_i}B"
+}
+
+main () {
+    tput init
+    # TODO: make sure trapping is good
+    trap "tput reset; exit" INT TERM HUP QUIT
+    trap 'handle ""' WINCH
+
+    handle ""
+    while true; do
+        stty raw
+        key="$(dd bs=1 count=1 2>/dev/null)"
+        # TODO: would like to get rid of shelling out to read a raw byte, but conv=unblock | read raw doesn't work
+        stty -raw
+        handle "$key"
+    done
+}
+
+main

@@ -1,0 +1,8 @@
+# icd
+
+interactive cd (fast travel) in posix shell. assumes vt100 terminal.
+
+
+## usage
+
+copy `icd` somewhere on path, source `icd-wrapper`, `ic`. arrow keys to navigate, q or ^C to quit.
