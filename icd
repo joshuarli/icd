@@ -5,23 +5,22 @@
 # assumes terminal is vt100
 
 # global state
-# index of current item in ls output for PWD.
+# index of current item in PWD/*
 i=1
-# string at i of PWD listing, used for a faster right arrow (cd into i). precomputed during paint new state.
+# current item in PWD/* "i string", used for a faster right arrow (cd into i). precomputed during paint new state.
 is=
 # number of items, used for i wrapping around up/down. precomputed during paint new state.
 n=
 
 handle () {
-    # clear terminal - POSIX specifies tput clear
+    # clear the terminal - POSIX specifies `tput clear`
+    # there is the vt100 assumption, but printf '\x1bc' (RIS - reset terminal to initial state)
+    # results in cursor visual artifacting while moving it around at the end of handle()
     tput clear
-    # alternatively, use vt100 RIS - reset terminal to initial state
-    # printf %s '\x1bc'
 
     # handle key, and adjust index and/or pwd as necessary
-    # get last character of string
-    # https://unix.stackexchange.com/a/163485/233306
-    case "${1#"${1%?}"}" in
+    # ABCD corresponds to the vt100 special key codes for arrow keys
+    case "$1" in
         A|k)
             # up
             i=$((i-1))
@@ -85,13 +84,14 @@ handle () {
 }
 
 main () {
-    tput init
-    # TODO: make sure trapping is good
-    trap "tput reset; exit" INT TERM HUP QUIT
+    # XXX: user can't interactively send SIGINT via ^C due to stty raw mode for capturing the key
+    trap "exit" INT TERM HUP QUIT
     trap 'handle ""' WINCH
 
+    # populate initial global state, clear the screen and initial painting
     handle ""
-    while true; do
+
+    while :; do
         stty raw
         key="$(dd bs=1 count=1 2>/dev/null)"
         # TODO: would like to get rid of shelling out to read a raw byte, but conv=unblock | read raw doesn't work

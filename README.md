@@ -9,7 +9,7 @@ this was inspired by how fast i found i could navigate within `ncdu`, and was fe
 
 copy `icd` somewhere on path, source `icd-wrapper`, `ic`.
 
-arrow keys or vi-like bindings to navigate, q or ^C to quit.
+arrow keys or vi-like bindings to navigate, q to quit.
 
 
 ## notes
