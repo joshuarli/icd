@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+# interactive cd with arrow keys - think "fast travel"
+# implemented in bash 4+, with as little usage of external processes as possible
+# assumes ncurses tput, not POSIX tput
+
+# global state
+# index of current item in PWD/*
+i=1
+# current item in PWD/* "i string", used for a faster right arrow (cd into i). precomputed during paint new state.
+is=
+# number of items, used for i wrapping around up/down. precomputed during paint new state.
+n=
+
+handle () {
+    tput clear
+
+    # handle key, and adjust index and/or pwd as necessary
+    # ABCD corresponds to the vt100 special key codes for arrow keys
+    case "$1" in
+        A|k)
+            # up
+            i=$((i-1))
+            [[ "$i" == 0 ]] && i="$n"
+            ;;
+        B|j)
+            # down
+            if [[ "$i" == "$n" ]]; then
+                i=1
+            else
+                i=$((i+1))
+            fi
+            ;;
+        C|l)
+            # right
+            if [[ -d "$is" ]]; then
+                cd "$is"
+                i=1
+            fi
+            ;;
+        D|h)
+            # left - go up a directory, and recalculate the index.
+            wd="${PWD##*/}"
+            cd ..
+            i=1
+            for item in "$PWD"/*; do
+                [[ "${item##*/}" == "$wd" ]] && break
+                i=$((i+1))
+            done
+            ;;
+        q)
+            exit
+            ;;
+    esac
+
+    # store PWD for icd-wrapper to cd into.
+    echo -n "$PWD" > /tmp/icd-dir
+
+    # paint new state
+    tput bold; echo -e "${PWD}\n"; tput sgr0
+    j=1
+    # TODO: scrolling items past # lines available
+    # detect via tput lines
+    for item in "$PWD"/*; do
+        disp="${item##*/}"
+        if [[ "$i" == "$j" ]]; then
+            disp="> ${disp}"
+            is="$item"
+        fi
+        if [[ -d "$item" ]]; then
+            echo "${disp}/"
+        else
+            echo "$disp"
+        fi
+        j=$((j+1))
+    done
+    n=$((j-1))
+
+    # NOTE: unlike POSIX tput, ncurses tput lets us hide the cursor, which is more desirable
+    #       as there is less visual artifacting.
+    #       so instead of moving the cursor to the current > indicator, we forgo the cursor altogether.
+    # tput cup "$((i+1))" 0
+}
+
+main () {
+    tput civis
+    trap "tput reset; exit" EXIT
+    trap 'handle ""' WINCH
+
+    # populate initial global state, clear the screen and initial painting
+    handle ""
+    while :; do
+        read -rsN1 key
+        handle "$key"
+    done
+}
+
+main
