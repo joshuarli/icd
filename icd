@@ -22,24 +22,27 @@ handle () {
     # get last character of string
     # https://unix.stackexchange.com/a/163485/233306
     case "${1#"${1%?}"}" in
-        A)
+        A|k)
+            # up
             i=$((i-1))
             [ "$i" = 0 ] && i="$n"
             ;;
-        B)
+        B|j)
+            # down
             if [ "$i" = "$n" ]; then
                 i=1
             else
                 i=$((i+1))
             fi
             ;;
-        C)
+        C|l)
+            # right
             if [ -d "$is" ]; then
                 cd "$is"
                 i=1
             fi
             ;;
-        D)
+        D|h)
             # left - go up a directory, and recalculate the index.
             wd="${PWD##*/}"
             cd ..
