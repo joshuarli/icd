@@ -2,7 +2,7 @@
 
 interactive cd (fast travel) in posix shell. assumes emulated terminal is vt100, see notes.
 
-this was inspired by how fast i found i could navigate within `ncdu`, and was fed up with `cd` and `..`. in fact, implementing d/delete and recursive size reporting (using posix awk to parse ls and do math, or assume `du`) would make `icd` a very naive `ncdu` implementation without the ncurses part, or interactive du "idu", but i digress.
+this was inspired by how fast i found i could navigate within `ncdu`, and was fed up with repeating `cd`, `cd ..` or `..`, and `ls`. in fact, implementing d/delete and recursive size reporting (using posix awk to parse ls and do math, or assume `du`) would make `icd` a very naive `ncdu` implementation without the ncurses part, or interactive du "idu", but i digress.
 
 
 ## usage
