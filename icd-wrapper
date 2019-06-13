@@ -1,3 +1,4 @@
-ic () {
-    ./icd && cd "$(< /tmp/icd-dir)"
+# ft - fast travel
+ft () {
+    icd && cd "$(< /tmp/icd-dir)"
 }
