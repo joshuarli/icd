@@ -19,3 +19,9 @@ arrow keys or vi-like bindings to navigate, q to quit.
 posix specifies a very limited `tput`, so `icd` relies on some hardcoded vt100 escape sequences.
 
 `icd` can be trivially ported to a more featureful environment, such as `bash` + ncurses `tput`, for some nontrivial compatibility (in the terminal sense) and performance improvements. examples can be found in `ports/`.
+
+
+## see also
+
+- [fff](https://github.com/dylanaraps/fff)
+- [filet](https://github.com/buffet/filet) (actually found this shortly after finishing a working version of icd, it's very similar from a UI standpoint but has slightly more features)
