@@ -1,21 +1,23 @@
 #!/usr/bin/env bash
 
-# interactive cd with arrow keys - think "fast travel"
+# interactive cd with arrow keys/hjkl - think "fast travel", ncdu-style
 # implemented in bash 4+, with as little usage of external processes as possible
 # assumes ncurses tput, not POSIX tput
+# also assumes vt100 special key codes for the arrow keys, but no such terminal assumption is present if you use hjkl
 
 # global state
 # index of current item in PWD/*
 i=1
-# current item in PWD/* "i string", used for a faster right arrow (cd into i). precomputed during paint new state.
+# current item in PWD/* (is = "i string"), passed to cd. precomputed during paint new state.
 is=
-# number of items, used for i wrapping around up/down. precomputed during paint new state.
+# number of items in PWD, used for wrapping i on up/down. precomputed during paint new state.
 n=
 
+# handle is the main event loop - it modifies global state based on a keypress (arg 1)
+# and then repaints the new global state
 handle () {
     tput clear
 
-    # handle key, and adjust index and/or pwd as necessary
     # ABCD corresponds to the vt100 special key codes for arrow keys
     case "$1" in
         A|k)
@@ -25,18 +27,11 @@ handle () {
             ;;
         B|j)
             # down
-            if [[ "$i" == "$n" ]]; then
-                i=1
-            else
-                i=$((i+1))
-            fi
+            [[ "$i" == "$n" ]] && i=1 || i=$((i+1))
             ;;
         C|l)
             # right
-            if [[ -d "$is" ]]; then
-                cd "$is"
-                i=1
-            fi
+            [[ -d "$is" ]] && cd "$is" && i=1
             ;;
         D|h)
             # left - go up a directory, and recalculate the index.
